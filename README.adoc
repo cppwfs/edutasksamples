@@ -1,0 +1,34 @@
+= Task EDU Samples
+
+This is the foundation project from which Spring Cloud Data Flow's Task Edu materials will be derived.
+
+== Overview
+This project contains 2 apps:
+
+* *billusage* - which pulls JSON files containing simple user cellphone usage data from a specified directory and stores the results into a RDBMS datastore.
+* *billrun* - which will read the user cell-phone usage data from a table, price it and place the results in another table.
+
+== Build the project
+From the root project execute the following:
+```
+mvn clean package
+```
+
+== Executing the jars
+
+=== To execute billusage
+
+Assuming you are using MySql and your sample data is located in the `s3://cellsample/sampledata/` bucket
+```
+java -jar billusage-0.0.1-SNAPSHOT.jar --cloud.aws.credentials.accessKey=<accesskey> --cloud.aws.credentials.secretKey=<secretkey> --cloud.aws.region.static=us-east-1 --cloud.aws.stack.auto=false --cloud.aws.region.auto=false --spring.datasource.url=jdbc:mysql://localhost:3306/<your database>?useSSL=false --spring.datasource.username=<user> --spring.datasource.password=<password> --spring.datasource.driverClassName=com.mysql.jdbc.Driver --spring.datasource.initialization-mode=always --io.spring.inputBucket=s3://cellsample/sampledata/*.*
+```
+
+=== To execute billrun
+
+Assuming you are using MySql
+```
+java -jar target/bill-run-1.0.0.BUILD-SNAPSHOT.jar --spring.datasource.url=jdbc:mysql://localhost:3306/<your database>?useSSL=false --spring.datasource.username=<user> --spring.datasource.password=<password> --spring.datasource.driverClassName=com.mysql.jdbc.Driver --spring.datasource.initialization-mode=always --spring.batch.initialize-schema=always
+```
+
+
+
