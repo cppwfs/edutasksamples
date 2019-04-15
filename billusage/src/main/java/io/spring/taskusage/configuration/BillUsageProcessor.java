@@ -26,27 +26,27 @@ import com.fasterxml.jackson.databind.type.CollectionType;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.aws.core.io.s3.PathMatchingSimpleStorageResourcePatternResolver;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.StreamUtils;
 
-public class S3Processor {
+public class BillUsageProcessor {
 
 
-	@Value("${io.spring.inputBucket:s3://cellsample/sampledata/*.*}")
+	@Value("${io.spring.inputBucket:classpath:usagedata.json}")
 	private String inputBucket;
 
 	private final NamedParameterJdbcTemplate jdbcTemplate;
 
-	private PathMatchingSimpleStorageResourcePatternResolver resourcePatternResolver;
+	private PathMatchingResourcePatternResolver resourcePatternResolver;
 
 	private static final String CREATE_USAGE = "INSERT into "
 			+ "BILL_USAGE(id, first_name, last_name, minutes, data_usage ) values (:id, :firstName, :lastName, :minutes, :dataUsage)";
 
 
-	public S3Processor(PathMatchingSimpleStorageResourcePatternResolver resourcePatternResolver, DataSource dataSource) {
+	public BillUsageProcessor(PathMatchingResourcePatternResolver resourcePatternResolver, DataSource dataSource) {
 		this.resourcePatternResolver = resourcePatternResolver;
 		this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
 	}

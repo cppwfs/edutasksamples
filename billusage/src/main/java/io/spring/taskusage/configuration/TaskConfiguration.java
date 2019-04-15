@@ -17,18 +17,17 @@
 package io.spring.taskusage.configuration;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 
-import com.amazonaws.services.s3.AmazonS3;
 
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.cloud.aws.core.io.s3.PathMatchingSimpleStorageResourcePatternResolver;
 import org.springframework.cloud.task.configuration.EnableTask;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.weaving.LoadTimeWeaverAware;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.instrument.classloading.LoadTimeWeaver;
 
@@ -37,15 +36,22 @@ import org.springframework.instrument.classloading.LoadTimeWeaver;
 public class TaskConfiguration {
 
 	@Bean
-	PathMatchingSimpleStorageResourcePatternResolver resourcePatternResolver(AmazonS3 amazonS3, ResourcePatternResolver resourcePatternResolver) {
-		return new PathMatchingSimpleStorageResourcePatternResolver(amazonS3, resourcePatternResolver);
+	PathMatchingResourcePatternResolver resourcePatternResolver(ResourcePatternResolver resourcePatternResolver) {
+		return new PathMatchingResourcePatternResolver(resourcePatternResolver);
 	}
 
 	@Bean
-	CommandLineRunner commandLineRunner(S3Processor s3Processor) {
+	CommandLineRunner commandLineRunner(BillUsageProcessor billUsageProcessor) {
 		return args -> {
-			s3Processor.processResources();
+			billUsageProcessor.processResources();
 		};
+	}
+
+	@Bean
+	public BillUsageProcessor s3Processor(
+			PathMatchingResourcePatternResolver resourcePatternResolver,
+			DataSource dataSource) {
+		return new BillUsageProcessor(resourcePatternResolver,dataSource);
 	}
 
 	/**
