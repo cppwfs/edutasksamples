@@ -6,7 +6,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>spring-cloud-task-edu-samples</artifactId>
-        <groupId>io.spring</groupId>
+    <groupId>io.spring</groupId>
 	<version>1.0.0.BUILD-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Spring Cloud Task EDU Samples</name>
