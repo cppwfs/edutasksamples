@@ -16,19 +16,13 @@
 
 package io.spring.taskusage;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-
-import io.spring.taskusage.configuration.Usage;
 import javax.sql.DataSource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,31 +30,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class BillusageApplicationTests {
+public class BillsetuptaskApplicationTests {
 
 	@Autowired
 	private DataSource dataSource;
 
 	@Test
 	public void testRepository() {
-			List<Usage> usages = getResultsFromDB(dataSource);
-			assertThat(usages.size()).isEqualTo(5);
-			assertThat(usages.get(0).getId()).isEqualTo(1);
-			assertThat(usages.get(0).getFirstName()).isEqualTo("jane");
-	}
+		JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSource);
+		int result = jdbcTemplate.queryForObject(
+		"SELECT COUNT(*) FROM BILL_STATEMENTS", Integer.class);
 
-	public List<Usage> getResultsFromDB(DataSource dataSource) {
-			NamedParameterJdbcTemplate jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-			return jdbcTemplate.query("select ID, FIRST_NAME, LAST_NAME, MINUTES, DATA_USAGE FROM BILL_USAGE", new UsageRowMapper());
-	}
-
-	private final class UsageRowMapper implements RowMapper<Usage> {
-		@Override
-		public Usage mapRow(ResultSet rs, int rowNum) throws SQLException {
-			return new Usage(rs.getLong("id"),
-					rs.getString("FIRST_NAME"), rs.getString("LAST_NAME"),
-					rs.getLong("MINUTES"), rs.getLong("DATA_USAGE"));
-		}
-
+		assertThat(result).isEqualTo(0);
 	}
 }

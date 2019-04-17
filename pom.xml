@@ -19,7 +19,7 @@
 
 	<modules>
 		<module>billrun</module>
-		<module>billusage</module>
+		<module>billsetuptask</module>
 	</modules>
 
 	<dependencyManagement>

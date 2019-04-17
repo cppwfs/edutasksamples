@@ -16,7 +16,7 @@
 
 package io.spring.billrun.configuration;
 
-import javax.annotation.PostConstruct;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,22 +26,21 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
-import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
-import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.batch.item.json.JacksonJsonObjectReader;
+import org.springframework.batch.item.json.JsonItemReader;
+import org.springframework.batch.item.json.builder.JsonItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.task.configuration.EnableTask;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.weaving.LoadTimeWeaverAware;
 import org.springframework.core.io.Resource;
-import org.springframework.instrument.classloading.LoadTimeWeaver;
 
 
 @Configuration
@@ -56,7 +55,7 @@ public class BillingConfiguration {
 	@Autowired
 	public StepBuilderFactory stepBuilderFactory;
 
-	@Value("${usage.file.name:file:/Users/glennrenfro/tmp/usageinfo.txt}")
+	@Value("${usage.file.name:classpath:usageinfo.json}")
 	private Resource usageResource;
 
 	@Bean
@@ -69,21 +68,23 @@ public class BillingConfiguration {
 				.build();
 
 		return jobBuilderFactory.get("BillJob")
+				.incrementer(new RunIdIncrementer())
 				.start(step)
 				.build();
 	}
 
 	@Bean
-	public JdbcCursorItemReader<Usage> jdbcItemReader(DataSource dataSource) {
-		return  new JdbcCursorItemReaderBuilder<Usage>()
-				.dataSource(dataSource)
-				.name("usageReader")
-				.sql("SELECT * from BILL_USAGE")
-				.saveState(false)
-				.rowMapper((rs, rowNum) -> {
-					return new Usage(rs.getLong("ID"), rs.getString("FIRST_NAME"),
-							rs.getString("LAST_NAME"), rs.getLong("MINUTES"), rs.getLong("DATA_USAGE"));
-				})
+	public JsonItemReader<Usage> jsonItemReader() {
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		JacksonJsonObjectReader<Usage> jsonObjectReader =
+				new JacksonJsonObjectReader<>(Usage.class);
+		jsonObjectReader.setMapper(objectMapper);
+
+		return new JsonItemReaderBuilder<Usage>()
+				.jsonObjectReader(jsonObjectReader)
+				.resource(usageResource)
+				.name("UsageJsonItemReader")
 				.build();
 	}
 
@@ -102,25 +103,4 @@ public class BillingConfiguration {
 		return new BillProcessor();
 	}
 
-	/**
-	 * Work-around for https://github.com/spring-projects/spring-boot/issues/13042
-	 */
-	@Configuration
-	protected static class DataSourceInitializerInvokerConfiguration implements LoadTimeWeaverAware {
-
-		@Autowired
-		private ListableBeanFactory beanFactory;
-
-		@PostConstruct
-		public void init() {
-			String cls = "org.springframework.boot.autoconfigure.jdbc.DataSourceInitializerInvoker";
-			if (beanFactory.containsBean(cls)) {
-				beanFactory.getBean(cls);
-			}
-		}
-
-		@Override
-		public void setLoadTimeWeaver(LoadTimeWeaver ltw) {
-		}
-	}
 }
