@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package io.spring.taskusage;
+package io.spring.billsetuptask;
 
 import javax.sql.DataSource;
 import org.junit.Test;
